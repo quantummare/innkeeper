@@ -1,4 +1,58 @@
 ﻿
+namespace Innkeeper_Branch_and_Bound;
+
+class InnkeeperBranchAndBound
+{
+    private List<List<int>> customerAmenity;
+    
+    int Branch(List<List<int>> filledCustomers, List<List<int>> filledAmenities, int globalMinimum, int globalMaximum,
+        int currentMinimum, int currentMaximum, int floor, int amenityNumber, int customerNumber)
+    {
+        if (amenityNumber < 2)
+        {
+        
+        }
+    
+        else if (customerNumber == 2 && floor == 4)
+        {
+        
+        }
+    
+        else if (customerNumber < 3)
+        {
+            var newscores = new List<List<int>>();
+            foreach (var customer in filledCustomers[5])
+            {
+                newscores.Add(new List<int> { customer, 0});
+            }
+            int amenity1 = filledAmenities[floor][0];
+            int amenity2 = filledAmenities[floor][1];
+
+            foreach (var customer in newscores)
+            {
+                customer[1] += customerAmenity[customer[0]][amenity1] + customerAmenity[customer[0]][amenity2];
+            }
+            
+            newscores = newscores.OrderBy(x => x[1]).ToList();
+
+            int childrenBest = 0;
+            
+            foreach (var customer in newscores)
+            {
+                int iscore = customer[1];
+                int newmax = currentMaximum - (4 - iscore);
+                int newmin = currentMinimum + iscore;
+
+                if (newmax >= globalMaximum)
+                {
+                    List<List<int>> newCustomers = new List<List<int>>(filledCustomers);
+                    newCustomers[floor].Add(customer[0]);
+                }
+            }
+        }
+    }
+}
+
 
 /*
 14 Customer types
@@ -45,25 +99,37 @@ theoretical maximum score = 56
 Hand-found score: 51
 
 
+filledCustomers is a list with 6 Lists within it. Each sublist has the indexes of all customers that are assigned to that floor
+
 Branch (filled customers, filled amenities, global minimum, global maximum, current minimum, current maximum, floor, amenity number, customer number)
-    for each customer, calculates the score that customer would add to the minimum or remove from the maximum.
-    Then, calculate a new global maximum based on the highest maximum of its children and do the same for minimum.
-    Then, for each customer, run through: If customer's maximum < global minimum, ignore. Else, Branch(new filled customers, ..., ..., ..., current minimum, current maximum, floor, amenity number, customer number)
-    
-    
-    
-    if amenity number < 2:
-        for each unassigned amenity:
-            add this amenity to filled amenities
-            Branch (..., new filled amenities, ..., ..., ..., amenity number + 1, ...)
-    else if customer number = 2 AND floor = 4
-        amenity1 = AmenityFloor[i][0]
-        amenity2 = AmenityFloor[i][1]
-        newscore = CustomerAmenity[customer number, amenity1] + CustomerAmenity[customer number, amenity2]
-        end of permutation, return score + newscore
-    else if customer number = 3
-        for each unassigned customer:
-            add this customer to filled customers
-            add this floor 
+for each customer, calculates the score that customer would add to the minimum or remove from the maximum.
+Then, calculate a new global maximum based on the highest maximum of its children and do the same for minimum.
+Then, for each customer, run through: If customer's maximum < global minimum, ignore.
+Otherwise, Branch(new filled customers, ..., ..., ..., current minimum, current maximum, floor, amenity number, customer number)
+
+if amenity number < 2: for each unfilled amenity: Branch(..., new filled amenities, ..., ..., ..., ..., ..., amenity number + 1, ...)
+
+else if customer number = 2 AND floor = 4:
+    pick the final customer
+    calculate their scores
+    add that score to current minimum
+
+else if customer number < 3:
+    make list newscores (2 ints: score and customer index)
+    amenity1 = filled amenities [floor][0]
+    amenity2 = filled amenities [floor][1]
+    for each unfilled customer:
+        cscore = CustomerAmentiy[customer amenity1] + CustomerAmenity[customer amenity2]
+        add cscore to newscores along with customer index
+    sort newscores by score
+    childrenbest = 0
+    for i in newscores:
+        iscore = newscores[i]
+        newmax = current maximum - (4 - iscore)
+        newmin = current minimum + iscore
+        if newmax < global minimum, return 0
+        else childscore = Branch (new filled customers, ..., ..., ..., newmin, newmax, floor, amenity number, customer number + 1)
+            if childscore > childrenbest: childrenbest = childscore
+            if childrenbest > globalminimum: globalminimum = childrenbest
 
 */

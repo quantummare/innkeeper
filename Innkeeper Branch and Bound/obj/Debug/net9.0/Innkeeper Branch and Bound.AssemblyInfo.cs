@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Innkeeper Branch and Bound")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+538bf0a4e087365772d258c067f0b08e5b359130")]
 [assembly: System.Reflection.AssemblyProductAttribute("Innkeeper Branch and Bound")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Innkeeper Branch and Bound")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
