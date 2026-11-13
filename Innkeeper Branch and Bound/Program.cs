@@ -3,53 +3,98 @@ namespace Innkeeper_Branch_and_Bound;
 
 class InnkeeperBranchAndBound
 {
+    private static int CUSTOMER_COUNT = 14;
+    private static int FLOOR_COUNT = 5;
+    private static int AMENITY_COUNT = 12;
     private List<List<int>> customerAmenity;
     
-    int Branch(List<List<int>> filledCustomers, List<List<int>> filledAmenities, int globalMinimum, int globalMaximum,
+    int Branch(List<List<int>> customerFloor, List<List<int>> amenityFloor, int globalMinimum, int globalMaximum,
         int currentMinimum, int currentMaximum, int floor, int amenityNumber, int customerNumber)
     {
         if (amenityNumber < 2)
         {
-        
+            //since we're not calculating score in between amenities, we might as well do them both at once
+            for (int i = 0; i < AMENITY_COUNT - 1; i++)
+            {
+                for (int j = i + 1; j < AMENITY_COUNT; j++)
+                {
+                    List<List<int>> newAmenityFloor = new List<List<int>>(amenityFloor);
+                    newAmenityFloor[floor].Add(i);
+                    newAmenityFloor[floor].Add(j);
+                    
+                    return Branch(customerFloor, newAmenityFloor, globalMinimum, globalMaximum, currentMinimum, 
+                        currentMaximum, floor, amenityNumber + 2, customerNumber);
+                }
+            }
         }
     
-        else if (customerNumber == 2 && floor == 4)
+        else if (floor == FLOOR_COUNT)
         {
-        
+            int amenityindex1 = amenityFloor[floor][0];
+            int amenityindex2 = amenityFloor[floor][1];
+
+            int thisscore = 0;
+
+            for (int i = 0; i < CUSTOMER_COUNT; i++)
+            {
+                thisscore += customerAmenity[i][amenityindex1] * customerFloor[i][floor] +
+                             customerAmenity[i][amenityindex2] * customerFloor[i][floor];
+            }
+            
+            return thisscore;
         }
     
         else if (customerNumber < 3)
         {
-            var newscores = new List<List<int>>();
-            foreach (var customer in filledCustomers[5])
+            //add all unassigned customers to a list with scores recorded
+            var unassignedcustomers = new List<List<int>>();
+            for (int i = 0; i < CUSTOMER_COUNT; i++)
             {
-                newscores.Add(new List<int> { customer, 0});
-            }
-            int amenity1 = filledAmenities[floor][0];
-            int amenity2 = filledAmenities[floor][1];
-
-            foreach (var customer in newscores)
-            {
-                customer[1] += customerAmenity[customer[0]][amenity1] + customerAmenity[customer[0]][amenity2];
+                if (customerFloor[FLOOR_COUNT][i] == 1)
+                {
+                    unassignedcustomers.Add([i, 0]);
+                }
             }
             
-            newscores = newscores.OrderBy(x => x[1]).ToList();
+            int amenityindex1 = amenityFloor[floor][0];
+            int amenityindex2 = amenityFloor[floor][1];
+
+            //calculate the scores for each customer
+            foreach (var customer in unassignedcustomers)
+            {
+                customer[1] += customerAmenity[customer[0]][amenityindex1] + customerAmenity[customer[0]][amenityindex2];
+            }
+            
+            //order the customers by score
+            unassignedcustomers = unassignedcustomers.OrderBy(x => x[1]).ToList();
 
             int childrenBest = 0;
             
-            foreach (var customer in newscores)
+            
+            foreach (var customer in unassignedcustomers)
             {
                 int iscore = customer[1];
                 int newmax = currentMaximum - (4 - iscore);
                 int newmin = currentMinimum + iscore;
 
-                if (newmax >= globalMaximum)
+                if (newmax >= globalMinimum)
                 {
-                    List<List<int>> newCustomers = new List<List<int>>(filledCustomers);
-                    newCustomers[floor].Add(customer[0]);
+                    List<List<int>> newCustomers = new List<List<int>>(customerFloor);
+                    newCustomers[floor][customer[0]] = 1;
+                    newCustomers[FLOOR_COUNT][customer[0]] = 0;
+
+                    int childScore = Branch(newCustomers, amenityFloor, globalMinimum, globalMaximum,
+                        newmin, newmax, floor, amenityNumber, customerNumber + 1);
+                    
+                    childrenBest = int.Max(childrenBest, childScore);
+                    globalMinimum = int.Max(globalMinimum, childrenBest);
                 }
             }
+            
+            return childrenBest;
         }
+
+        return 0;
     }
 }
 
