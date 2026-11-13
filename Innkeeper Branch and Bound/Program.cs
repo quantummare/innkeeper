@@ -6,13 +6,19 @@ class InnkeeperBranchAndBound
     private static int CUSTOMER_COUNT = 14;
     private static int FLOOR_COUNT = 5;
     private static int AMENITY_COUNT = 12;
-    private List<List<int>> customerAmenity;
+    private List<List<int>> CUSTOMER_AMENITY = 
+        [[2, 2, 0, 0, 1, 0, 0, 1, 1, 2, 0, 0],  //native
+         [2, 0, 2, 1, 1, 1, 0, 2, 0, 0, 0, 0],  //redneck
+         [0, 0, 2, 0, 2, 2, 1, 0, 1, 0, 0, 1],  //bachelor
+         [2, 1, 0, 0, 0, 0, 2, 2, 1, 0, 0, 1]]; //scientist
     
     int Branch(List<List<int>> customerFloor, List<List<int>> amenityFloor, int globalMinimum, int globalMaximum,
-        int currentMinimum, int currentMaximum, int floor, int amenityNumber, int customerNumber)
+        int currentMinimum, int currentMaximum, int floor, int amenityNumber, int customerCount)
     {
         if (amenityNumber < 2)
         {
+            int bestchild = 0;
+            
             //since we're not calculating score in between amenities, we might as well do them both at once
             for (int i = 0; i < AMENITY_COUNT - 1; i++)
             {
@@ -22,10 +28,14 @@ class InnkeeperBranchAndBound
                     newAmenityFloor[floor].Add(i);
                     newAmenityFloor[floor].Add(j);
                     
-                    return Branch(customerFloor, newAmenityFloor, globalMinimum, globalMaximum, currentMinimum, 
-                        currentMaximum, floor, amenityNumber + 2, customerNumber);
+                    int pairscore = Branch(customerFloor, newAmenityFloor, globalMinimum, globalMaximum, currentMinimum, 
+                        currentMaximum, floor, amenityNumber + 2, customerCount);
+
+                    bestchild = int.Max(bestchild, pairscore);
                 }
             }
+            
+            return bestchild;
         }
     
         else if (floor == FLOOR_COUNT)
@@ -35,16 +45,17 @@ class InnkeeperBranchAndBound
 
             int thisscore = 0;
 
+            //there should be only two customers remaining
             for (int i = 0; i < CUSTOMER_COUNT; i++)
             {
-                thisscore += customerAmenity[i][amenityindex1] * customerFloor[i][floor] +
-                             customerAmenity[i][amenityindex2] * customerFloor[i][floor];
+                thisscore += CUSTOMER_AMENITY[i][amenityindex1] * customerFloor[i][floor] +
+                             CUSTOMER_AMENITY[i][amenityindex2] * customerFloor[i][floor];
             }
             
             return thisscore;
         }
     
-        else if (customerNumber < 3)
+        else if (customerCount < 3)
         {
             //add all unassigned customers to a list with scores recorded
             var unassignedcustomers = new List<List<int>>();
@@ -62,7 +73,7 @@ class InnkeeperBranchAndBound
             //calculate the scores for each customer
             foreach (var customer in unassignedcustomers)
             {
-                customer[1] += customerAmenity[customer[0]][amenityindex1] + customerAmenity[customer[0]][amenityindex2];
+                customer[1] += CUSTOMER_AMENITY[customer[0]][amenityindex1] + CUSTOMER_AMENITY[customer[0]][amenityindex2];
             }
             
             //order the customers by score
@@ -84,7 +95,7 @@ class InnkeeperBranchAndBound
                     newCustomers[FLOOR_COUNT][customer[0]] = 0;
 
                     int childScore = Branch(newCustomers, amenityFloor, globalMinimum, globalMaximum,
-                        newmin, newmax, floor, amenityNumber, customerNumber + 1);
+                        newmin, newmax, floor, amenityNumber, customerCount + 1);
                     
                     childrenBest = int.Max(childrenBest, childScore);
                     globalMinimum = int.Max(globalMinimum, childrenBest);
@@ -94,7 +105,11 @@ class InnkeeperBranchAndBound
             return childrenBest;
         }
 
-        return 0;
+        else            //only happens when customerCount == 3, so we should move to the next floor
+        {
+            return Branch(customerFloor, amenityFloor, globalMinimum, globalMaximum, currentMinimum, currentMaximum,
+                floor + 1, 0, 0);
+        }
     }
 }
 
@@ -109,13 +124,13 @@ Scoring:
 
 CustomerFloor = set of customers on floor i
 AmenityFloor = set of Amenities on floor i
-CustomerAmenity = 14 * 12 array of scores {0, 1, 2} of which amenities are a customers favourite or secondary
-Score = sum: for i in customerfloor, for j in amenityfloor, customeramenity(ij)
+CUSTOMER_AMENITY = 14 * 12 array of scores {0, 1, 2} of which amenities are a customers favourite or secondary
+Score = sum: for i in customerfloor, for j in amenityfloor, CUSTOMER_AMENITY(ij)
 
 Maybe more like:
 CustomerFloor = set of which floor each customer is on
 AmenityFloor = set of which floor each amenity is on
-CustomerAmenity is the same
+CUSTOMER_AMENITY is the same
 Score = sum: for i in 0-13, for j in 0-11, if CustomerFloor(i) == AmenityFloor(j), add CustomerAmentiy(ij) to Score
 
 67e+6 permutations for customers
@@ -164,7 +179,7 @@ else if customer number < 3:
     amenity1 = filled amenities [floor][0]
     amenity2 = filled amenities [floor][1]
     for each unfilled customer:
-        cscore = CustomerAmentiy[customer amenity1] + CustomerAmenity[customer amenity2]
+        cscore = CustomerAmentiy[customer amenity1] + CUSTOMER_AMENITY[customer amenity2]
         add cscore to newscores along with customer index
     sort newscores by score
     childrenbest = 0

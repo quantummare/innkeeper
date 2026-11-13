@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\astfa\\Documents\\Coding\\Random Projects\\Innkeeper Branch and Bound\\Innkeeper Branch and Bound\\Innkeeper Branch and Bound.csproj": {}
+    "C:\\Users\\astfa\\RiderProjects\\innkeeper\\Innkeeper Branch and Bound\\Innkeeper Branch and Bound.csproj": {}
   },
   "projects": {
-    "C:\\Users\\astfa\\Documents\\Coding\\Random Projects\\Innkeeper Branch and Bound\\Innkeeper Branch and Bound\\Innkeeper Branch and Bound.csproj": {
+    "C:\\Users\\astfa\\RiderProjects\\innkeeper\\Innkeeper Branch and Bound\\Innkeeper Branch and Bound.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\astfa\\Documents\\Coding\\Random Projects\\Innkeeper Branch and Bound\\Innkeeper Branch and Bound\\Innkeeper Branch and Bound.csproj",
+        "projectUniqueName": "C:\\Users\\astfa\\RiderProjects\\innkeeper\\Innkeeper Branch and Bound\\Innkeeper Branch and Bound.csproj",
         "projectName": "Innkeeper Branch and Bound",
-        "projectPath": "C:\\Users\\astfa\\Documents\\Coding\\Random Projects\\Innkeeper Branch and Bound\\Innkeeper Branch and Bound\\Innkeeper Branch and Bound.csproj",
+        "projectPath": "C:\\Users\\astfa\\RiderProjects\\innkeeper\\Innkeeper Branch and Bound\\Innkeeper Branch and Bound.csproj",
         "packagesPath": "C:\\Users\\astfa\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\astfa\\Documents\\Coding\\Random Projects\\Innkeeper Branch and Bound\\Innkeeper Branch and Bound\\obj\\",
+        "outputPath": "C:\\Users\\astfa\\RiderProjects\\innkeeper\\Innkeeper Branch and Bound\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\astfa\\AppData\\Roaming\\NuGet\\NuGet.Config"
