@@ -10,49 +10,98 @@ class InnkeeperBranchAndBound
         [[2, 2, 0, 0, 1, 0, 0, 1, 1, 2, 0, 0],  //native
          [2, 0, 2, 1, 1, 1, 0, 2, 0, 0, 0, 0],  //redneck
          [0, 0, 2, 0, 2, 2, 1, 0, 1, 0, 0, 1],  //bachelor
-         [2, 1, 0, 0, 0, 0, 2, 2, 1, 0, 0, 1]]; //scientist
+         [2, 1, 0, 0, 0, 0, 2, 2, 1, 0, 0, 1],  //pseudoscientist
+         [0, 0, 2, 2, 0, 2, 1, 0, 0, 1, 1, 0],  //zoologist
+         [0, 2, 0, 1, 0, 0, 0, 2, 1, 2, 1, 0],  //pensioner
+         [1, 0, 1, 0, 2, 0, 0, 0, 2, 1, 2, 0],  //critic
+         [1, 1, 0, 0, 2, 0, 2, 1, 0, 0, 0, 1],  //blogger
+         [0, 0, 0, 0, 0, 2, 1, 0, 2, 1, 2, 1],  //socialite
+         [0, 0, 1, 1, 0, 0, 0, 2, 0, 2, 2, 1],  //politician
+         [1, 0, 2, 1, 0, 2, 0, 0, 0, 0, 1, 2],  //celebrity
+         [0, 1, 1, 1, 0, 0, 2, 2, 0, 0, 0, 2],  //MIB
+         [2, 1, 0, 2, 0, 1, 0, 0, 0, 2, 0, 1],  //hipster
+         [0, 0, 1, 2, 0, 1, 0, 0, 2, 0, 1, 2]]; //jetsetter
+
+    static void Main()
+    {
+        var b = new InnkeeperBranchAndBound();
+        
+    }
+
+    void Solve()
+    {
+        int[,] customerFloor = new int[FLOOR_COUNT + 1, CUSTOMER_COUNT];
+        int[,] amenityFloor = new int[FLOOR_COUNT + 1, AMENITY_COUNT];
+
+        for (int i = 0; i < CUSTOMER_COUNT; i++)
+        {
+            customerFloor[FLOOR_COUNT, i] = 1;
+        }
+        
+        for (int i = 0; i < AMENITY_COUNT; i++)
+        {
+            amenityFloor[FLOOR_COUNT, i] = 1;
+        }
+        
+    }
     
-    int Branch(List<List<int>> customerFloor, List<List<int>> amenityFloor, int globalMinimum, int globalMaximum,
-        int currentMinimum, int currentMaximum, int floor, int amenityNumber, int customerCount)
+    (int, int[,], int[,]) Branch(int[,] customerFloor, int[,] amenityFloor, int globalMinimum, int globalMaximum, 
+        int floor, int amenityNumber, int customerCount)
     {
         if (amenityNumber < 2)
         {
-            int bestchild = 0;
+            (int, int[,], int[,]) bestchild = (0, new int[FLOOR_COUNT + 1, CUSTOMER_COUNT], new int[FLOOR_COUNT + 1, AMENITY_COUNT]);
             
             //since we're not calculating score in between amenities, we might as well do them both at once
             for (int i = 0; i < AMENITY_COUNT - 1; i++)
             {
                 for (int j = i + 1; j < AMENITY_COUNT; j++)
                 {
-                    List<List<int>> newAmenityFloor = new List<List<int>>(amenityFloor);
-                    newAmenityFloor[floor].Add(i);
-                    newAmenityFloor[floor].Add(j);
-                    
-                    int pairscore = Branch(customerFloor, newAmenityFloor, globalMinimum, globalMaximum, currentMinimum, 
-                        currentMaximum, floor, amenityNumber + 2, customerCount);
 
-                    bestchild = int.Max(bestchild, pairscore);
+                    int[,] newAmenityFloor = new int[FLOOR_COUNT + 1, AMENITY_COUNT];
+                    amenityFloor.CopyTo(newAmenityFloor, 0);
+                    newAmenityFloor[floor, i] = 1;
+                    newAmenityFloor[floor, j] = 1;
+                    newAmenityFloor[FLOOR_COUNT, i] = 0;
+                    newAmenityFloor[FLOOR_COUNT, j] = 0;
+                    
+                    (int, int[,], int[,]) thisscore = Branch(customerFloor, newAmenityFloor, globalMinimum, globalMaximum,
+                        floor, amenityNumber + 2, customerCount);
+
+                    if (thisscore.Item1 > bestchild.Item1)
+                    {
+                        bestchild = thisscore;
+
+                        globalMinimum = int.Max(globalMinimum, thisscore.Item1);
+                    }
                 }
             }
             
             return bestchild;
         }
     
-        else if (floor == FLOOR_COUNT)
+        else if (floor == FLOOR_COUNT - 1)
         {
             int amenityindex1 = amenityFloor[floor][0];
             int amenityindex2 = amenityFloor[floor][1];
 
             int thisscore = 0;
-
+            
+            List<List<int>> newCustomerFloor = new List<List<int>>(customerFloor);
+            List<List<int>> newAmenityFloor = new List<List<int>>(amenityFloor);
+            
             //there should be only two customers remaining
             for (int i = 0; i < CUSTOMER_COUNT; i++)
             {
-                thisscore += CUSTOMER_AMENITY[i][amenityindex1] * customerFloor[i][floor] +
-                             CUSTOMER_AMENITY[i][amenityindex2] * customerFloor[i][floor];
+                if (customerFloor[i][FLOOR_COUNT] == 1)
+                {
+                    thisscore += CUSTOMER_AMENITY[i][amenityindex1] + CUSTOMER_AMENITY[i][amenityindex2];
+                    newCustomerFloor[i][FLOOR_COUNT] = 0;
+                    newCustomerFloor[i][floor] = 1;
+                }
             }
             
-            return thisscore;
+            return (thisscore, newCustomerFloor, newAmenityFloor);
         }
     
         else if (customerCount < 3)
@@ -79,7 +128,7 @@ class InnkeeperBranchAndBound
             //order the customers by score
             unassignedcustomers = unassignedcustomers.OrderBy(x => x[1]).ToList();
 
-            int childrenBest = 0;
+            (int, List<List<int>>, List<List<int>>) bestchild = (0, null, null);
             
             
             foreach (var customer in unassignedcustomers)
@@ -94,15 +143,19 @@ class InnkeeperBranchAndBound
                     newCustomers[floor][customer[0]] = 1;
                     newCustomers[FLOOR_COUNT][customer[0]] = 0;
 
-                    int childScore = Branch(newCustomers, amenityFloor, globalMinimum, globalMaximum,
-                        newmin, newmax, floor, amenityNumber, customerCount + 1);
-                    
-                    childrenBest = int.Max(childrenBest, childScore);
-                    globalMinimum = int.Max(globalMinimum, childrenBest);
+                    (int, List<List<int>>, List<List<int>>) childScore = Branch(newCustomers, amenityFloor,
+                        globalMinimum, globalMaximum,
+                        newmin, newmax, floor, amenityNumber, customerCount = 1);
+
+                    if (childScore.Item1 > bestchild.Item1)
+                    {
+                        bestchild = childScore;
+                        globalMinimum = int.Max(globalMinimum, childScore.Item1);
+                    }
                 }
             }
             
-            return childrenBest;
+            return bestchild;
         }
 
         else            //only happens when customerCount == 3, so we should move to the next floor
