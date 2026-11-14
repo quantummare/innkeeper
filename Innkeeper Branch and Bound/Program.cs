@@ -30,51 +30,56 @@ class InnkeeperBranchAndBound
 
     void Solve()
     {
-        int[,] customerFloor = new int[FLOOR_COUNT + 1, CUSTOMER_COUNT];
-        int[,] amenityFloor = new int[FLOOR_COUNT + 1, AMENITY_COUNT];
+        int[] customerFloor = new int[CUSTOMER_COUNT];
+        int[] amenityFloor = new int[AMENITY_COUNT];
 
         for (int i = 0; i < CUSTOMER_COUNT; i++)
         {
-            customerFloor[FLOOR_COUNT, i] = 1;
+            customerFloor[i] = FLOOR_COUNT;
         }
         
         for (int i = 0; i < AMENITY_COUNT; i++)
         {
-            amenityFloor[FLOOR_COUNT, i] = 1;
+            amenityFloor[i] = FLOOR_COUNT;
         }
         
     }
     
-    (int, int[,], int[,]) Branch(int[,] customerFloor, int[,] amenityFloor, int globalMinimum, int globalMaximum, 
-        int floor, int amenityNumber, int customerCount)
+    (int, int[], int[]) Branch(int[] customerFloor, int[] amenityFloor, int globalMinimum, int globalMaximum, 
+        int currentMinimum, int currentMaximum, int floor, int amenityNumber, int customerCount)
     {
         if (amenityNumber < 2)
         {
-            (int, int[,], int[,]) bestchild = (0, new int[FLOOR_COUNT + 1, CUSTOMER_COUNT], new int[FLOOR_COUNT + 1, AMENITY_COUNT]);
+            (int, int[], int[]) bestchild = (0, new int[CUSTOMER_COUNT], new int[AMENITY_COUNT]);
             
             //since we're not calculating score in between amenities, we might as well do them both at once
             for (int i = 0; i < AMENITY_COUNT - 1; i++)
             {
-                for (int j = i + 1; j < AMENITY_COUNT; j++)
+                if (amenityFloor[i] == FLOOR_COUNT)
                 {
-
-                    int[,] newAmenityFloor = new int[FLOOR_COUNT + 1, AMENITY_COUNT];
-                    amenityFloor.CopyTo(newAmenityFloor, 0);
-                    newAmenityFloor[floor, i] = 1;
-                    newAmenityFloor[floor, j] = 1;
-                    newAmenityFloor[FLOOR_COUNT, i] = 0;
-                    newAmenityFloor[FLOOR_COUNT, j] = 0;
-                    
-                    (int, int[,], int[,]) thisscore = Branch(customerFloor, newAmenityFloor, globalMinimum, globalMaximum,
-                        floor, amenityNumber + 2, customerCount);
-
-                    if (thisscore.Item1 > bestchild.Item1)
+                    for (int j = i + 1; j < AMENITY_COUNT; j++)
                     {
-                        bestchild = thisscore;
+                        if (amenityFloor[j] == FLOOR_COUNT)
+                        {
+                            int[] newAmenityFloor = new int[AMENITY_COUNT];
+                            amenityFloor.CopyTo(newAmenityFloor, 0);
+                            newAmenityFloor[i] = floor;
+                            newAmenityFloor[j] = floor;
+                    
+                            (int, int[], int[]) thisscore = Branch(customerFloor, newAmenityFloor, globalMinimum, globalMaximum,
+                                currentMinimum, currentMaximum, floor, amenityNumber + 2, customerCount);
 
-                        globalMinimum = int.Max(globalMinimum, thisscore.Item1);
+                            if (thisscore.Item1 > bestchild.Item1)
+                            {
+                                bestchild = thisscore;
+
+                                globalMinimum = int.Max(globalMinimum, thisscore.Item1);
+                            }
+                        }
+                        
                     }
                 }
+                
             }
             
             return bestchild;
@@ -82,22 +87,30 @@ class InnkeeperBranchAndBound
     
         else if (floor == FLOOR_COUNT - 1)
         {
-            int amenityindex1 = amenityFloor[floor][0];
-            int amenityindex2 = amenityFloor[floor][1];
+            int amenityindex1 = -1;
+            int amenityindex2 = -1;
+
+            for (int i = 0; i < AMENITY_COUNT; i++)
+            {
+                if (amenityFloor[i] == floor && amenityindex1 == -1)
+                {
+                    amenityindex1 = i;
+                }
+                else amenityindex2 = i;
+            }
 
             int thisscore = 0;
             
-            List<List<int>> newCustomerFloor = new List<List<int>>(customerFloor);
-            List<List<int>> newAmenityFloor = new List<List<int>>(amenityFloor);
+            int[] newCustomerFloor = new int[CUSTOMER_COUNT];
+            int[] newAmenityFloor = new int[AMENITY_COUNT];
             
             //there should be only two customers remaining
             for (int i = 0; i < CUSTOMER_COUNT; i++)
             {
-                if (customerFloor[i][FLOOR_COUNT] == 1)
+                if (customerFloor[i] == FLOOR_COUNT)
                 {
                     thisscore += CUSTOMER_AMENITY[i][amenityindex1] + CUSTOMER_AMENITY[i][amenityindex2];
-                    newCustomerFloor[i][FLOOR_COUNT] = 0;
-                    newCustomerFloor[i][floor] = 1;
+                    newCustomerFloor[i] = floor;
                 }
             }
             
@@ -110,14 +123,23 @@ class InnkeeperBranchAndBound
             var unassignedcustomers = new List<List<int>>();
             for (int i = 0; i < CUSTOMER_COUNT; i++)
             {
-                if (customerFloor[FLOOR_COUNT][i] == 1)
+                if (customerFloor[i] == FLOOR_COUNT)
                 {
                     unassignedcustomers.Add([i, 0]);
                 }
             }
             
-            int amenityindex1 = amenityFloor[floor][0];
-            int amenityindex2 = amenityFloor[floor][1];
+            int amenityindex1 = -1;
+            int amenityindex2 = -1;
+
+            for (int i = 0; i < AMENITY_COUNT; i++)
+            {
+                if (amenityFloor[i] == floor && amenityindex1 == -1)
+                {
+                    amenityindex1 = i;
+                }
+                else amenityindex2 = i;
+            }
 
             //calculate the scores for each customer
             foreach (var customer in unassignedcustomers)
@@ -128,7 +150,7 @@ class InnkeeperBranchAndBound
             //order the customers by score
             unassignedcustomers = unassignedcustomers.OrderBy(x => x[1]).ToList();
 
-            (int, List<List<int>>, List<List<int>>) bestchild = (0, null, null);
+            (int, int[], int[]) bestchild = (0, new int[CUSTOMER_COUNT], new int[AMENITY_COUNT]);
             
             
             foreach (var customer in unassignedcustomers)
@@ -139,12 +161,11 @@ class InnkeeperBranchAndBound
 
                 if (newmax >= globalMinimum)
                 {
-                    List<List<int>> newCustomers = new List<List<int>>(customerFloor);
-                    newCustomers[floor][customer[0]] = 1;
-                    newCustomers[FLOOR_COUNT][customer[0]] = 0;
+                    int[] newCustomerFloor = new int[CUSTOMER_COUNT];
+                    customerFloor.CopyTo(newCustomerFloor, 0);
+                    newCustomerFloor[customer[0]] = floor;
 
-                    (int, List<List<int>>, List<List<int>>) childScore = Branch(newCustomers, amenityFloor,
-                        globalMinimum, globalMaximum,
+                    (int, int[], int[]) childScore = Branch(newCustomerFloor, amenityFloor, globalMinimum, globalMaximum,
                         newmin, newmax, floor, amenityNumber, customerCount = 1);
 
                     if (childScore.Item1 > bestchild.Item1)
